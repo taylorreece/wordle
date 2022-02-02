@@ -1,7 +1,6 @@
 import assert from "assert";
 import fs from "fs";
 import sqlite3 from "better-sqlite3";
-import { open } from "sqlite";
 import { mean, median, std } from "mathjs";
 
 const words = fs.readFileSync("words.txt").toString().split("\n");
@@ -87,9 +86,8 @@ assert(checkWord("abcde", "axxbb", ["g", "-", "-", "y", "-"]));
 
 const db = sqlite3("results.db");
 
-let currentWord = db
-  .prepare("SELECT MAX(guess) AS latest FROM guesses")
-  .get().latest;
+let currentWord = db.prepare("SELECT MAX(guess) AS latest FROM guesses").get()
+  .latest;
 
 words.forEach((guess, idx) => {
   if (guess <= currentWord) {
@@ -117,3 +115,14 @@ words.forEach((guess, idx) => {
     "INSERT INTO guesses (guess, mean, med, std) VALUES (@guess, @mean, @med, @std)"
   ).run(data);
 });
+
+/* Get a graph for SOARE */
+const soareCounts = possibleSolutions.map((word) => {
+  const pattern = makeGuess(word, "soare");
+  const matches = possibleSolutions.filter((other) =>
+    checkWord(other, "soare", pattern)
+  );
+  return matches.length;
+});
+
+fs.writeFileSync("soare.data", JSON.stringify(soareCounts));
